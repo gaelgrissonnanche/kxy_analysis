@@ -94,7 +94,7 @@ def TS_Kxy(Data_P, Data_N, ThermalConductivity, Temperatures, geofactor,
 
     """
     Function returns the ThermalHallConductivity Kxy for a dTy the transverse
-    gradient of heat current Jqx, with B applied along the z-axis, in the dictionnary : \n
+    gradient of heat current Jqx, with H applied along the z-axis, in the dictionnary : \n
 
     ThermalHallConductivity["V_dTy_P"] = V_dTy_P # in Volts \n
     ThermalHallConductivity["V_dTy_N"] = V_dTy_N # in Volts \n
@@ -234,12 +234,64 @@ def TS_Kxy(Data_P, Data_N, ThermalConductivity, Temperatures, geofactor,
 ##>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>#
 
 def FS_Kxy_discrete(files_FS, columns_FS, geofactor, sign_dTy = 1,
-                    file_calib = None, columns_calib = None,
+                    T_connected = "Tav", file_calib = None, columns_calib = None,
                     R_heater = 5000, Gain=1000, **trash):
 
+    """
+    Function computes Kxy function of mangetic field for a dTy the transverse\n
+    gradient of heat current Jqx, with H applied along the z-axis.
+
+    Input:
+    file_FS : dictionnary of all isotherms, keys are (T0, date) \n
+    columns_FS : dictionnary that contains all columns for the FS files, \n
+        col_H, col_Vy, col_T0, col_I, col_Rp, col_Rm, col_Vy, col_time_stable\n
+    geofactor : dictionnary with keys "L", "w", "t", the geometric factor \n
+    Gain : the gain of the preamp, for homemade ones in Sherbrooke Gain is 1000 \n
+    sign_dTy : 1 if sign of dTy ok, -1 if needed to be reversed \n
+    file_calib : path+filename towards the data_raw file which will be used for calibrating
+                the Cernox. If using thermocouples for dTx, then leave it to None.to
+    columns_calib : dictionnary that contains all columns for the calib file, \n
+                    col_T0_calib, col_Rp_0_calib, col_Rm_0_calib \n
+    R_heater : resistance of the sample heater, usely 5 kOhm \n
+
+    !!!
+    T_connected is the temperature corresponding to the location on the sample
+    where the differential thermocouple measuring dTy is connected : \n
+    - if connected on T+ : then T_connected = "T+" \n
+    - if connected on T- : then T_connected = "T-" \n
+    - if connected in diagonal : then T_connected = "Tav" \n
+    !!!
+
+    Output
+    It returns the following dictionnaries \n
+    that take for key the title of there content (e.g. "dTy") and have for values \n
+    a dictionnary which takes (Tav, date) as a key (e.g. SYM_dict["dTy"] = dTy_SYM_dict \n
+    which is a dictionnary of keys Tav, date) \n
+    NSYM : means non-symmetrized in field data
+    SYM : means symmetrized or antisymmetrized in field data
+
+    NSYM_dict["Vy_stab"] = Vy_NSYM_stab_dict \n
+    # in Volt, it is Vy paused @ field values function time \n
+    NSYM_dict["H"] = H_NSYM_dict \n
+    NSYM_dict["Vy"] = Vy_NSYM_dict \n
+    NSYM_dict["T0"] = T0_NSYM_dict \n
+    NSYM_dict["Tp"] = Tp_NSYM_dict \n
+    NSYM_dict["Tm"] = Tm_NSYM_dict \n
+
+    SYM_dict["H"] = H_SYM_dict \n
+    SYM_dict["T0"] = T0_SYM_dict \n
+    SYM_dict["Vy"] = Vy_SYM_dict \n
+    SYM_dict["Tp"] = Tp_SYM_dict \n
+    SYM_dict["Tm"] = Tm_SYM_dict \n
+    SYM_dict["Tav"] = Tav_SYM_dict \n
+    SYM_dict["dTx"] = dTx_SYM_dict \n
+    SYM_dict["Kxx"] = Kxx_SYM_dict \n
+    SYM_dict["dTy"] = dTy_SYM_dict \n
+    SYM_dict["Kxy"] = Kxy_SYM_dict \n
+    SYM_dict["I"] = I_SYM_dict \n
+    """
 
     ## Longitudinal thermometry: thermometers or thermocouple? >>>>>>>>>>>>>>>>#
-
     if file_calib == None:
         thermometry_xx = "thermocouples"
     else:
@@ -259,8 +311,8 @@ def FS_Kxy_discrete(files_FS, columns_FS, geofactor, sign_dTy = 1,
         # T-
         Rm_0 = data_calib[:,col_Rm_0_calib]
 
-        coeff_Rp = np.polyfit( np.log(Rp_0), np.log(T0_calib), 8)
-        coeff_Rm = np.polyfit( np.log(Rm_0), np.log(T0_calib), 8)
+        coeff_Rp = np.polyfit( np.log(Rp_0) - np.mean(np.log(Rp_0)), np.log(T0_calib), 8)
+        coeff_Rm = np.polyfit( np.log(Rm_0) - np.mean(np.log(Rm_0)), np.log(T0_calib), 8)
 
     ## Columns FS /////////////////////////////////////////////////////////////#
     col_H = columns_FS["col_H"]
@@ -307,6 +359,7 @@ def FS_Kxy_discrete(files_FS, columns_FS, geofactor, sign_dTy = 1,
     ## FS loop >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>#
     for (T0, date) in keys_files_FS:
 
+        # Load data for one isotherm
         list_elements = files_FS[T0, date]
         filename = list_elements[0]
         start_pause = list_elements[1]
@@ -323,8 +376,8 @@ def FS_Kxy_discrete(files_FS, columns_FS, geofactor, sign_dTy = 1,
 
         # Thermometry along x axis
         if thermometry_xx == "thermometers":
-            Tp_NSYM = np.exp( np.polyval( coeff_Rp, np.log(Data[:,col_Rp])) )
-            Tm_NSYM = np.exp( np.polyval( coeff_Rm, np.log(Data[:,col_Rm])) )
+            Tp_NSYM = np.exp( np.polyval( coeff_Rp, np.log(Data[:,col_Rp]) - np.mean(np.log(Rp_0))) )
+            Tm_NSYM = np.exp( np.polyval( coeff_Rm, np.log(Data[:,col_Rm]) - np.mean(np.log(Rm_0))) )
 
         ## Keep only points during stabilization at each steps ////////////////#
         index_stable = (time_s == 1)
@@ -402,7 +455,13 @@ def FS_Kxy_discrete(files_FS, columns_FS, geofactor, sign_dTy = 1,
               r"{0:.2f}".format(Tav) + " K @ date = " + str(date))
 
         ## Compute dTy & Kxy //////////////////////////////////////////////////#
-        dTy_SYM = Vy_SYM / Sther( Tav_SYM )
+        if T_connected == "T+":
+            dTy_SYM = Vy_SYM / Sther(Tp_SYM)
+        elif T_connected == "T-":
+            dTy_SYM = Vy_SYM / Sther(Tm_SYM)
+        else :
+            dTy_SYM = Vy_SYM / Sther(Tav_SYM)
+
         Kxx_SYM = Q / dTx_SYM / alpha
         Kxy_SYM = Kxx_SYM * dTy_SYM / dTx_SYM * ( L / w )
 

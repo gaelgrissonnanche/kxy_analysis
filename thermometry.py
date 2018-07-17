@@ -358,11 +358,11 @@ def temp_thermometers(Data_P, Data_N, col_T0, col_Rp_0, col_Rp_Q,
     ########### Positive H #############
     #----------------------------------#
 
-    coeff_Rp_P = np.polyfit( np.log(Rp_P_0), np.log(T0_P), deg_fit)
-    coeff_Rm_P = np.polyfit( np.log(Rm_P_0), np.log(T0_P), deg_fit)
+    coeff_Rp_P = np.polyfit( np.log(Rp_P_0) - np.mean(np.log(Rp_P_0)), np.log(T0_P), deg_fit)
+    coeff_Rm_P = np.polyfit( np.log(Rm_P_0) - np.mean(np.log(Rm_P_0)), np.log(T0_P), deg_fit)
 
-    Tp_P = np.exp( np.polyval( coeff_Rp_P, np.log(Rp_P_Q)) ) # hot temperature T+
-    Tm_P = np.exp( np.polyval( coeff_Rm_P, np.log(Rm_P_Q)) ) # cold temperature T-
+    Tp_P = np.exp( np.polyval( coeff_Rp_P, np.log(Rp_P_Q) - np.mean(np.log(Rp_P_0))) ) # hot temperature T+
+    Tm_P = np.exp( np.polyval( coeff_Rm_P, np.log(Rm_P_Q) - np.mean(np.log(Rm_P_0))) ) # cold temperature T-
 
     dTx_P = Tp_P - Tm_P # dTx(H+)
     Tav_P = (Tp_P + Tm_P) / 2. # Tav(H+)
@@ -371,11 +371,11 @@ def temp_thermometers(Data_P, Data_N, col_T0, col_Rp_0, col_Rp_Q,
     ########### Negative H #############
     #----------------------------------#
 
-    coeff_Rp_N = np.polyfit( np.log(Rp_N_0), np.log(T0_N), deg_fit)
-    coeff_Rm_N = np.polyfit( np.log(Rm_N_0), np.log(T0_N), deg_fit)
+    coeff_Rp_N = np.polyfit( np.log(Rp_N_0) - np.mean(np.log(Rp_N_0)), np.log(T0_N), deg_fit)
+    coeff_Rm_N = np.polyfit( np.log(Rm_N_0) - np.mean(np.log(Rm_N_0)), np.log(T0_N), deg_fit)
 
-    Tp_N = np.exp( np.polyval( coeff_Rp_N, np.log(Rp_N_Q)) ) # hot temperature T+
-    Tm_N = np.exp( np.polyval( coeff_Rm_N, np.log(Rm_N_Q)) ) # cold temperature T-
+    Tp_N = np.exp( np.polyval( coeff_Rp_N, np.log(Rp_N_Q) - np.mean(np.log(Rp_N_0))) ) # hot temperature T+
+    Tm_N = np.exp( np.polyval( coeff_Rm_N, np.log(Rm_N_Q) - np.mean(np.log(Rm_N_0))) ) # cold temperature T-
 
     dTx_N = Tp_N - Tm_N # dTx(H-)
     Tav_N = (Tp_N + Tm_N) / 2. # Tav(H-)
@@ -509,8 +509,8 @@ def temp_thermometers(Data_P, Data_N, col_T0, col_Rp_0, col_Rp_Q,
         ############## T0_fit ##############
         ax1.plot(np.log(Rp_P_0), np.log(T0_P), marker="o", ls="", ms=6, mew= 0, mfc = "r", mec = "r")
         ax1.plot(np.log(Rm_P_0), np.log(T0_P), marker="o", ls="", ms=6, mew= 0, mfc = "#440154", mec = "#440154")
-        ax1.plot(np.log(Rp_P_0), np.polyval( coeff_Rp_P, np.log(Rp_P_0)), ls="-", lw=1.5,  c="k")
-        ax1.plot(np.log(Rm_P_0), np.polyval( coeff_Rm_P, np.log(Rm_P_0)), ls="-", lw=1.5,  c="k")
+        ax1.plot(np.log(Rp_P_0), np.polyval( coeff_Rp_P, np.log(Rp_P_0) - np.mean(np.log(Rp_P_0))), ls="-", lw=1.5,  c="k")
+        ax1.plot(np.log(Rm_P_0), np.polyval( coeff_Rm_P, np.log(Rm_P_0) - np.mean(np.log(Rm_P_0))), ls="-", lw=1.5,  c="k")
         ax1.set_ylabel(r"log ( $T_0$ )", labelpad = 15) # alpha is the transparancy
         ax1.locator_params(nbins=10) #gives the number of ticks maximum we want, here 6
         ax1.set_xticklabels([])
@@ -518,9 +518,9 @@ def temp_thermometers(Data_P, Data_N, col_T0, col_Rp_0, col_Rp_Q,
 
         ############ T0 - T0_fit ###########
         ax2.axhline(y=0, ls ="--", c ="k")
-        ax2.plot(T0_P,(T0_P-np.exp(np.polyval( coeff_Rp_P, np.log(Rp_P_0))))*1e3,
+        ax2.plot(T0_P,(T0_P-np.exp(np.polyval( coeff_Rp_P, np.log(Rp_P_0) - np.mean(np.log(Rp_P_0)))))*1e3,
                         marker="o", ls="--", lw=3, c="#DBDBDB", ms=8, mew = 0, mec="r", mfc = "r")
-        ax2.plot(T0_P,(T0_P-np.exp(np.polyval( coeff_Rm_P, np.log(Rm_P_0))))*1e3,
+        ax2.plot(T0_P,(T0_P-np.exp(np.polyval( coeff_Rm_P, np.log(Rm_P_0) - np.mean(np.log(Rm_P_0)))))*1e3,
                         marker="o", ls="--", lw=3, c="#DBDBDB", ms=8, mew = 0, mec = "#440154", mfc = "#440154")
         ax2.set_xlabel(r"$T_0$ ( K )")
         ax2.set_ylabel(r"$\Delta T_0$ (fit) ( mK )")
@@ -536,8 +536,8 @@ def temp_thermometers(Data_P, Data_N, col_T0, col_Rp_0, col_Rp_Q,
         ############## T0_fit ##############
         ax3.plot(np.log(Rp_N_0), np.log(T0_N), marker="o", ls="", ms=6, mfc = "r", mec = "r")
         ax3.plot(np.log(Rm_N_0), np.log(T0_N), marker="o", ls="", ms=6, mfc = "#440154", mec = "#440154")
-        ax3.plot(np.log(Rp_N_0), np.polyval( coeff_Rp_N, np.log(Rp_N_0)), ls="-", lw=1.5,  c="k")
-        ax3.plot(np.log(Rm_N_0), np.polyval( coeff_Rm_N, np.log(Rm_N_0)), ls="-", lw=1.5,  c="k")
+        ax3.plot(np.log(Rp_N_0), np.polyval( coeff_Rp_N, np.log(Rp_N_0) - np.mean(np.log(Rp_N_0))), ls="-", lw=1.5,  c="k")
+        ax3.plot(np.log(Rm_N_0), np.polyval( coeff_Rm_N, np.log(Rm_N_0) - np.mean(np.log(Rm_N_0))), ls="-", lw=1.5,  c="k")
         ax3.set_ylabel(r"log ( $T_0$ )", rotation = 270, labelpad = 35) # alpha is the transparancy
         ax3.yaxis.set_label_position("right")
         ax3.locator_params(nbins=10) #gives the number of ticks maximum we want, here 6
@@ -546,9 +546,9 @@ def temp_thermometers(Data_P, Data_N, col_T0, col_Rp_0, col_Rp_Q,
 
         ############ T0 - T0_fit ###########
         ax4.axhline(y=0, ls ="--", c ="k")
-        ax4.plot(T0_N,(T0_N-np.exp(np.polyval( coeff_Rp_N, np.log(Rp_N_0))))*1e3,
+        ax4.plot(T0_N,(T0_N-np.exp(np.polyval( coeff_Rp_N, np.log(Rp_N_0) - np.mean(np.log(Rp_N_0)))))*1e3,
                         marker="o", ls="--", lw=3, c="#DBDBDB", ms=8, mew = 0, mec = "r", mfc = "r")
-        ax4.plot(T0_N,(T0_N-np.exp(np.polyval( coeff_Rm_N, np.log(Rm_N_0))))*1e3,
+        ax4.plot(T0_N,(T0_N-np.exp(np.polyval( coeff_Rm_N, np.log(Rm_N_0) - np.mean(np.log(Rm_N_0)))))*1e3,
                         marker="o", ls="--", lw=3, c="#DBDBDB", ms=8, mew = 0, mec = "#440154", mfc = "#440154")
         ax4.set_xlabel(r"$T_0$ ( K )")
         ax4.set_ylabel(r"$\Delta T_0$ (fit) ( mK )", rotation = 270, labelpad = 22)
