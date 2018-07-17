@@ -242,7 +242,8 @@ def FS_Kxy_discrete(files_FS, columns_FS, geofactor, sign_dTy = 1,
     gradient of heat current Jqx, with H applied along the z-axis.
 
     Input:
-    file_FS : dictionnary of all isotherms, keys are (T0, date) \n
+    file_FS : dictionnary of all isotherms, keys are (T0, date) and values \n
+            [filepath, start_pause, end_pause]
     columns_FS : dictionnary that contains all columns for the FS files, \n
         col_H, col_Vy, col_T0, col_I, col_Rp, col_Rm, col_Vy, col_time_stable\n
     geofactor : dictionnary with keys "L", "w", "t", the geometric factor \n

@@ -52,9 +52,6 @@ def load_pickle_geofactor(samplelabel):
     "t" : the thicknes of the sample, in meter \n
     """
 
-    ####################################################
-    ## Load Picles #####################################
-
     with open("geofactor_" + samplelabel + ".pkl", "rb") as f: # 'r' means read
 
         unpickler_file = pickle.Unpickler(f)
@@ -79,13 +76,29 @@ def load_pickle_info(samplelabel):
     "comments" : comments regarding this particular set of points \n
     """
 
-
-    with open("info_" + samplelabel + ".pkl", "rb") as f: # 'w' means (over)write or create if doesn't exist
+    with open("info_TS_" + samplelabel + ".pkl", "rb") as f: # 'w' means (over)write or create if doesn't exist
 
         unpickler_file = pickle.Unpickler(f)
         info = unpickler_file.load() # keys of measurements are (H,date)
 
     return info
 
+##>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>#
+
+
+def load_pickle_FS(samplelabel):
+
+    """
+    Load the measurement pickle for the corresponding samplelabel. It contains
+    a dictionnary file_FS of all isotherms, keys are (T0, date) and values
+    [filepath, start_pause, end_pause]
+    """
+
+    with open("info_FS_" + samplelabel + ".pkl", "rb") as f: # 'w' means (over)write or create if doesn't exist
+
+        unpickler_file = pickle.Unpickler(f)
+        info = unpickler_file.load() # keys of measurements are (H,date)
+
+    return info
 
 
