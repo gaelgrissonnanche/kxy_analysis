@@ -9,7 +9,7 @@ from matplotlib.ticker import FormatStrFormatter
 ##>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>#
 
 
-def fig_print_TS(x, y, H, theta, xmin = 0, xmax = None, ymin = None, ymax = None,
+def fig_print_TS(x, y, H, xmin = 0, xmax = None, ymin = None, ymax = None,
     xlabel = "", ylabel = "", samplename = "", samplename_loc = 1, color = "r"):
 
     """
@@ -18,7 +18,6 @@ def fig_print_TS(x, y, H, theta, xmin = 0, xmax = None, ymin = None, ymax = None
     - x : the x-axis data
     - y : the y-axis data
     - H : field from the magnet H_m
-    - theta : the sample angle
     - xmin : x mininum
     - xmax : x maximum
     - ymin : y mininum
@@ -61,11 +60,6 @@ def fig_print_TS(x, y, H, theta, xmin = 0, xmax = None, ymin = None, ymax = None
     for tick in axes.yaxis.get_major_ticks():
         tick.set_pad(8)
 
-    ## Field components ///////////////////////////////////////////////////////////#
-
-    H_para = H * sin(theta) # H // to (ab) plane
-    H_perp = H * cos(theta) # H perp to (ab) plane
-
     #///// Legend //////#
     loc_dict = {}  # Position the sample name
     loc_dict[1] = [0.21,0.87, "left"] # coordinates
@@ -76,19 +70,8 @@ def fig_print_TS(x, y, H, theta, xmin = 0, xmax = None, ymin = None, ymax = None
     loc = loc_dict[samplename_loc] # select the right location among coordinates
     fig.text(loc[0], loc[1], samplename, ha = loc[2])
 
-
-    fig.text(0.82,0.87, r"$\theta$ = ", ha = 'left', fontsize = 20)
-    fig.text(0.90,0.87, "{0:g}".format(theta), ha="left", fontsize = 20)
-
-    fig.text(0.82,0.80, r"$H_{m}$ = ", ha = 'left', fontsize = 20)
-    fig.text(0.90,0.8, "{0:g}".format(H) + " T", ha="left", fontsize = 20)
-
-    fig.text(0.82,0.73, r"$H_{||}$ = ", ha = 'left', fontsize = 20)
-    fig.text(0.90,0.73, "{0:g}".format(H_para) + " T", ha="left", fontsize = 20)
-
-    fig.text(0.82,0.66, r"$H_{\perp}$= ", ha = 'left', fontsize = 20)
-    fig.text(0.90,0.66, "{0:g}".format(H_perp) + " T", ha="left", fontsize = 20)
-
+    fig.text(0.82,0.87, r"$H$ = ", ha = 'left', fontsize = 20)
+    fig.text(0.885,0.87, "{0:g}".format(H) + " T", ha="left", fontsize = 20)
 
     #///// Choose if horizontal line y = 0  is needed /////#
     if min(y) * max(y) < 0:
@@ -113,7 +96,7 @@ def fig_print_TS(x, y, H, theta, xmin = 0, xmax = None, ymin = None, ymax = None
 
 ##>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>#
 
-def fig_print_FS(x_dict, y_dict, theta, xmin = 0, xmax = None, ymin = None, ymax = None,
+def fig_print_FS(x_dict, y_dict, xmin = 0, xmax = None, ymin = None, ymax = None,
     xlabel = r"$H$ ( T )", ylabel = "", samplename = "", samplename_loc = 1,  markevery = 1,
     colormap = "jet", hl = None, vx = None):
 
@@ -122,7 +105,6 @@ def fig_print_FS(x_dict, y_dict, theta, xmin = 0, xmax = None, ymin = None, ymax
     It takes for arguments:
     - x_dict : the x-axis dictionnary (keys are temperature and date) for the x-axis data
     - y_dict : the y-axis dictionnary (keys are temperature and date) data
-    - theta : the sample angle
     - xmin : x mininum
     - xmax : x maximum
     - ymin : y mininum
@@ -178,10 +160,8 @@ def fig_print_FS(x_dict, y_dict, theta, xmin = 0, xmax = None, ymin = None, ymax
     loc = loc_dict[samplename_loc] # select the right location among coordinates
     fig.text(loc[0], loc[1], samplename, ha = loc[2])
 
-
-    fig.text(0.83,0.9, r"$\theta$ = " + "{0:g}".format(theta), ha = 'left', fontsize = 20)
-    fig.text(0.90,0.85, r"T ( K )  //", fontsize = 12, ha = "right")
-    fig.text(0.96,0.85, r"date", fontsize = 12, ha = "right")
+    fig.text(0.905,0.92, r"$T$ ( K ) -", fontsize = 12, ha = "right")
+    fig.text(0.93,0.92, r"date", fontsize = 12, ha = "left")
 
     #///// Choose if horizontal line y = hl  is needed /////#
     if hl != None:
@@ -211,8 +191,8 @@ def fig_print_FS(x_dict, y_dict, theta, xmin = 0, xmax = None, ymin = None, ymax
         line = axes.plot(x_dict[key],y_dict[key], markevery = markevery)
         plt.setp(line, ls ="-", c = colors[k], lw = 2.5, marker = "o", ms = 7, mew= 0, zorder = k)
 
-        fig.text(0.99,0.82-k*0.025, "{0}".format(round(T,2)) +
-                 "  //  " "{0}".format(round(date,0)),
+        fig.text(0.99, 0.89 - k * 0.025, "{0}".format(round(T,2)) +
+                 " - " "{0}".format(round(date,0)),
                       color = colors[k], fontsize = 12, ha ="right")
 
         k -= 1
