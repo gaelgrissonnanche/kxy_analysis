@@ -102,3 +102,35 @@ def load_pickle_FS(samplelabel):
     return info
 
 
+##>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>#
+
+def save_TS_file(samplelabel, axe, TS_style, measurement, H, date, Data, Header):
+
+  file_name = samplelabel + "_" + axe + "_" + TS_style + "_" + measurement + \
+             "_" + str(H) + 'T_' + str(date) +".dat"
+
+  np.savetxt('../data_analyzed/' + file_name,
+             Data, fmt='%.7e',
+             header = Header,
+             comments = "#")
+
+##>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>#
+
+def save_FS_files(samplelabel, axe, measurement, SYM_dict, data_type_list, Header):
+
+    keys = sorted(SYM_dict["H"].keys())
+
+    for Tav, date in keys:
+
+        Data_tuple = ()
+        for data_type in data_type_list:
+            Data_tuple += (SYM_dict[data_type][Tav, date],)
+
+        Data = np.vstack(Data_tuple)
+        Data = Data.transpose()
+
+        file_name =  samplelabel + "_" + axe + "_FS_" + measurement + "_" + \
+                 "{0:g}".format(Tav) + 'K_' + str(date) + ".dat"
+
+        np.savetxt('../Data_analyzed/'+ file_name,
+                    Data, fmt='%.7e', header = Header, comments = "#")
