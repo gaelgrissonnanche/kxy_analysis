@@ -234,7 +234,7 @@ def TS_Kxy(Data_P, Data_N, ThermalConductivity, Temperatures, geofactor,
 ##>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>#
 
 def FS_Kxy_discrete(files_FS, columns_FS, geofactor, sign_dTy = 1,
-                    T_connected = "Tav", file_calib = None, columns_calib = None,
+                    T_connected = "Tav", columns_calib = None,
                     R_heater = 5000, Gain=1000, **trash):
 
     """
@@ -244,13 +244,16 @@ def FS_Kxy_discrete(files_FS, columns_FS, geofactor, sign_dTy = 1,
     Input:
     file_FS : dictionnary of all isotherms, keys are (T0, date) and values \n
             [filepath, start_pause, end_pause]
+    if using thermometers for dTx, there is another element to the list:
+    ..., file_calib] : path + filename towards the data_raw file which will be used
+    for calibrating the Cernox.
+
     columns_FS : dictionnary that contains all columns for the FS files, \n
         col_H, col_Vy, col_T0, col_I, col_Rp, col_Rm, col_Vy, col_time_stable\n
     geofactor : dictionnary with keys "L", "w", "t", the geometric factor \n
     Gain : the gain of the preamp, for homemade ones in Sherbrooke Gain is 1000 \n
     sign_dTy : 1 if sign of dTy ok, -1 if needed to be reversed \n
-    file_calib : path+filename towards the data_raw file which will be used for calibrating
-                the Cernox. If using thermocouples for dTx, then leave it to None.to
+
     columns_calib : dictionnary that contains all columns for the calib file, \n
                     col_T0_calib, col_Rp_0_calib, col_Rm_0_calib \n
     R_heater : resistance of the sample heater, usely 5 kOhm \n
@@ -293,27 +296,10 @@ def FS_Kxy_discrete(files_FS, columns_FS, geofactor, sign_dTy = 1,
     """
 
     ## Longitudinal thermometry: thermometers or thermocouple? >>>>>>>>>>>>>>>>#
-    if file_calib == None:
+    if columns_calib == None:
         thermometry_xx = "thermocouples"
     else:
         thermometry_xx = "thermometers"
-
-    ## Load calibration file for thermometers >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>#
-    if thermometry_xx == "thermometers":
-        ## Thermometers calibration ///////////////////////////////////////////#
-        data_calib = np.loadtxt(file_calib, dtype = "float", comments = "#")
-        col_T0_calib = columns_calib["col_T0_calib"]
-        col_Rp_0_calib = columns_calib["col_Rp_0_calib"]
-        col_Rm_0_calib = columns_calib["col_Rm_0_calib"]
-        # T0
-        T0_calib = data_calib[:,col_T0_calib]
-        # T+
-        Rp_0 = data_calib[:,col_Rp_0_calib]
-        # T-
-        Rm_0 = data_calib[:,col_Rm_0_calib]
-
-        coeff_Rp = np.polyfit( np.log(Rp_0) - np.mean(np.log(Rp_0)), np.log(T0_calib), 8)
-        coeff_Rm = np.polyfit( np.log(Rm_0) - np.mean(np.log(Rm_0)), np.log(T0_calib), 8)
 
     ## Columns FS /////////////////////////////////////////////////////////////#
     col_H = columns_FS["col_H"]
@@ -377,6 +363,23 @@ def FS_Kxy_discrete(files_FS, columns_FS, geofactor, sign_dTy = 1,
 
         # Thermometry along x axis
         if thermometry_xx == "thermometers":
+
+            ## Thermometers calibration ///////////////////////////////////////#
+            file_calib = list_elements[3]
+            data_calib = np.loadtxt("../data_raw/" + file_calib, dtype = "float", comments = "#")
+            col_T0_calib = columns_calib["col_T0_calib"]
+            col_Rp_0_calib = columns_calib["col_Rp_0_calib"]
+            col_Rm_0_calib = columns_calib["col_Rm_0_calib"]
+            # T0
+            T0_calib = data_calib[:,col_T0_calib]
+            # T+
+            Rp_0 = data_calib[:,col_Rp_0_calib]
+            # T-
+            Rm_0 = data_calib[:,col_Rm_0_calib]
+
+            coeff_Rp = np.polyfit( np.log(Rp_0) - np.mean(np.log(Rp_0)), np.log(T0_calib), 8)
+            coeff_Rm = np.polyfit( np.log(Rm_0) - np.mean(np.log(Rm_0)), np.log(T0_calib), 8)
+
             Tp_NSYM = np.exp( np.polyval( coeff_Rp, np.log(Data[:,col_Rp]) - np.mean(np.log(Rp_0))) )
             Tm_NSYM = np.exp( np.polyval( coeff_Rm, np.log(Data[:,col_Rm]) - np.mean(np.log(Rm_0))) )
 
