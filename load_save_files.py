@@ -104,9 +104,9 @@ def load_pickle_FS(samplelabel):
 
 ##>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>#
 
-def save_TS_file(samplelabel, axe, TS_style, measurement, H, date, Data, Header):
+def save_TS_file(samplelabel, axe, measurement, H, date, Data, Header):
 
-  file_name = samplelabel + "_" + axe + "_" + TS_style + "_" + measurement + \
+  file_name = samplelabel + "_" + axe + "_" + measurement + \
              "_" + str(H) + 'T_' + str(date) +".dat"
 
   np.savetxt('../data_analyzed/' + file_name,
@@ -129,8 +129,25 @@ def save_FS_files(samplelabel, axe, measurement, SYM_dict, data_type_list, Heade
         Data = np.vstack(Data_tuple)
         Data = Data.transpose()
 
-        file_name =  samplelabel + "_" + axe + "_FS_" + measurement + "_" + \
+        file_name =  samplelabel + "_" + axe + "_" + measurement + "_" + \
                  "{0:g}".format(Tav) + 'K_' + str(date) + ".dat"
 
         np.savetxt('../Data_analyzed/'+ file_name,
                     Data, fmt='%.7e', header = Header, comments = "#")
+
+##>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>#
+
+def dates_function(SYM_dict):
+    """
+    Function that returns all the dates of FieldSweeps in a string, for example:
+    dates = 20180720_20180722
+    """
+
+    dates = []
+    for Tav, date in SYM_dict["H"].keys():
+        dates.append(str(date))
+
+    dates = sorted(set(dates))
+    dates = "_".join(dates)
+
+    return dates

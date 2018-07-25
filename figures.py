@@ -6,6 +6,7 @@ from numpy import cos, sin, arange, round, array
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FormatStrFormatter
+from matplotlib.backends.backend_pdf import PdfPages
 ##>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>#
 
 
@@ -574,3 +575,31 @@ def fig_diagno_Nernst(Temperatures, Nernst, H, measurement,
     f_manager.window.move(950, 75)
 
     return fig
+
+##>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>#
+
+def save_TS_figure(samplelabel, axe, measurement, H, date, fig_list):
+
+    figure_name = samplelabel + "_" + axe + "_" + measurement + \
+             "_" + str(H) + 'T_' + str(date) +".pdf"
+
+    file_figures = PdfPages("../figures/" + figure_name)
+
+    for fig in fig_list[::-1]:
+        file_figures.savefig(fig)
+
+    file_figures.close()
+
+##>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>#
+
+def save_FS_figure(samplelabel, axe, measurement, date, fig_list):
+
+    figure_name = samplelabel + "_" + axe + "_" + measurement + \
+                 "_" + str(date) +".pdf"
+
+    file_figures = PdfPages("../figures/" + figure_name)
+
+    for fig in fig_list[::-1]:
+        file_figures.savefig(fig)
+
+    file_figures.close()

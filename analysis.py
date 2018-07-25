@@ -249,7 +249,7 @@ def FS_Kxy_discrete(files_FS, columns_FS, geofactor, sign_dTy = 1,
     for calibrating the Cernox.
 
     columns_FS : dictionnary that contains all columns for the FS files, \n
-        col_H, col_Vy, col_T0, col_I, col_Rp, col_Rm, col_Vy, col_time_stable\n
+        col_H, col_Vy, col_T0, col_I, col_Rp, col_Rm, col_Vy, col_pause\n
     geofactor : dictionnary with keys "L", "w", "t", the geometric factor \n
     Gain : the gain of the preamp, for homemade ones in Sherbrooke Gain is 1000 \n
     sign_dTy : 1 if sign of dTy ok, -1 if needed to be reversed \n
@@ -274,7 +274,7 @@ def FS_Kxy_discrete(files_FS, columns_FS, geofactor, sign_dTy = 1,
     NSYM : means non-symmetrized in field data
     SYM : means symmetrized or antisymmetrized in field data
 
-    NSYM_dict["Vy_stab"] = Vy_NSYM_stab_dict \n
+    NSYM_dict["Vy_stab"] = Vy_NSYM_pause_dict \n
     # in Volt, it is Vy paused @ field values function time \n
     NSYM_dict["H"] = H_NSYM_dict \n
     NSYM_dict["Vy"] = Vy_NSYM_dict \n
@@ -308,7 +308,7 @@ def FS_Kxy_discrete(files_FS, columns_FS, geofactor, sign_dTy = 1,
     col_Rp = columns_FS["col_Rp"]
     col_Rm = columns_FS["col_Rm"]
     col_Vy = columns_FS["col_Vy"]
-    col_time_stable = columns_FS["col_time_stable"]
+    col_pause = columns_FS["col_pause"]
 
     ## Geometric factor ///////////////////////////////////////////////////////#
     L = geofactor["L"]
@@ -328,8 +328,9 @@ def FS_Kxy_discrete(files_FS, columns_FS, geofactor, sign_dTy = 1,
     T0_NSYM_dict = {}
     Tp_NSYM_dict = {}
     Tm_NSYM_dict = {}
-    Vy_NSYM_stab_dict = {}
     Vy_NSYM_dict = {}
+    Vy_NSYM_diagnostic_dict = {}
+    H_NSYM_diagnostic_dict = {}
 
     H_SYM_dict = {}
     T0_SYM_dict = {}
@@ -343,6 +344,11 @@ def FS_Kxy_discrete(files_FS, columns_FS, geofactor, sign_dTy = 1,
     Kxy_SYM_dict = {}
     I_SYM_dict = {}
 
+    dTy_p_SYM_dict = {}
+    dTy_m_SYM_dict = {}
+    Kxy_p_SYM_dict = {}
+    Kxy_m_SYM_dict = {}
+
     ## FS loop >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>#
     for (T0, date) in keys_files_FS:
 
@@ -355,11 +361,11 @@ def FS_Kxy_discrete(files_FS, columns_FS, geofactor, sign_dTy = 1,
         Data = np.loadtxt('../data_raw/' + filename,
                           dtype = "float", comments = "#")
 
-        H_NSYM = Data[:,col_H]
-        T0_NSYM = Data[:,col_T0]
-        Vy_NSYM = sign_dTy * ( Data[:,col_Vy] ) / Gain # in Volt
-        I = np.mean(Data[:, col_I])
-        time_s = Data[:,col_time_stable]
+        H_NSYM_raw = Data[:,col_H] # in Tesla
+        T0_NSYM_raw = Data[:,col_T0] # in Kelvin
+        Vy_NSYM_raw = sign_dTy * ( Data[:,col_Vy] ) / Gain # in Volt
+        I = np.mean(Data[:, col_I]) # in Amps
+        pause = Data[:,col_pause] # column giving 1 if H is paused, 0 otherwise
 
         # Thermometry along x axis
         if thermometry_xx == "thermometers":
@@ -380,29 +386,25 @@ def FS_Kxy_discrete(files_FS, columns_FS, geofactor, sign_dTy = 1,
             coeff_Rp = np.polyfit( np.log(Rp_0) - np.mean(np.log(Rp_0)), np.log(T0_calib), 8)
             coeff_Rm = np.polyfit( np.log(Rm_0) - np.mean(np.log(Rm_0)), np.log(T0_calib), 8)
 
-            Tp_NSYM = np.exp( np.polyval( coeff_Rp, np.log(Data[:,col_Rp]) - np.mean(np.log(Rp_0))) )
-            Tm_NSYM = np.exp( np.polyval( coeff_Rm, np.log(Data[:,col_Rm]) - np.mean(np.log(Rm_0))) )
+            Tp_NSYM_raw = np.exp( np.polyval( coeff_Rp, np.log(Data[:,col_Rp]) - np.mean(np.log(Rp_0))) )
+            Tm_NSYM_raw = np.exp( np.polyval( coeff_Rm, np.log(Data[:,col_Rm]) - np.mean(np.log(Rm_0))) )
 
-        ## Keep only points during stabilization at each steps ////////////////#
-        index_stable = (time_s == 1)
-        Vy_NSYM_stab = Vy_NSYM[index_stable]
 
         ## Seperate setps in field ////////////////////////////////////////////#
-        H_NSYM_s = [[H_NSYM[i] for i,value in it] for key,it in itertools.groupby(enumerate(time_s), key=operator.itemgetter(1)) if key != 0]
-        T0_NSYM_s = [[T0_NSYM[i] for i,value in it] for key,it in itertools.groupby(enumerate(time_s), key=operator.itemgetter(1)) if key != 0]
-        Vy_NSYM_s = [[Vy_NSYM[i] for i,value in it] for key,it in itertools.groupby(enumerate(time_s), key=operator.itemgetter(1)) if key != 0]
-        Tp_NSYM_s = [[Tp_NSYM[i] for i,value in it] for key,it in itertools.groupby(enumerate(time_s), key=operator.itemgetter(1)) if key != 0]
-        Tm_NSYM_s = [[Tm_NSYM[i] for i,value in it] for key,it in itertools.groupby(enumerate(time_s), key=operator.itemgetter(1)) if key != 0]
+        H_NSYM_pause = [[float(H_NSYM_raw[i]) for i,value in it] for key,it in itertools.groupby(enumerate(pause), key=operator.itemgetter(1)) if key != 0]
+        T0_NSYM_pause = [[float(T0_NSYM_raw[i]) for i,value in it] for key,it in itertools.groupby(enumerate(pause), key=operator.itemgetter(1)) if key != 0]
+        Vy_NSYM_pause = [[float(Vy_NSYM_raw[i]) for i,value in it] for key,it in itertools.groupby(enumerate(pause), key=operator.itemgetter(1)) if key != 0]
+        Tp_NSYM_pause = [[float(Tp_NSYM_raw[i]) for i,value in it] for key,it in itertools.groupby(enumerate(pause), key=operator.itemgetter(1)) if key != 0]
+        Tm_NSYM_pause = [[float(Tm_NSYM_raw[i]) for i,value in it] for key,it in itertools.groupby(enumerate(pause), key=operator.itemgetter(1)) if key != 0]
 
-        H_NSYM_mean = np.array([np.mean(i_list[start_pause:end_pause]) for i_list in H_NSYM_s])
-        T0_NSYM_mean = np.array([np.mean(i_list[start_pause:end_pause]) for i_list in T0_NSYM_s])
-        Vy_NSYM_mean = np.array([np.mean(i_list[start_pause:end_pause]) for i_list in Vy_NSYM_s])
-        Tp_NSYM_mean = np.array([np.mean(i_list[start_pause:end_pause]) for i_list in Tp_NSYM_s])
-        Tm_NSYM_mean = np.array([np.mean(i_list[start_pause:end_pause]) for i_list in Tm_NSYM_s])
+        H_NSYM_mean = np.array([np.mean(ith_list[start_pause:end_pause]) for ith_list in H_NSYM_pause])
+        T0_NSYM_mean = np.array([np.mean(ith_list[start_pause:end_pause]) for ith_list in T0_NSYM_pause])
+        Vy_NSYM_mean = np.array([np.mean(ith_list[start_pause:end_pause]) for ith_list in Vy_NSYM_pause])
+        Tp_NSYM_mean = np.array([np.mean(ith_list[start_pause:end_pause]) for ith_list in Tp_NSYM_pause])
+        Tm_NSYM_mean = np.array([np.mean(ith_list[start_pause:end_pause]) for ith_list in Tm_NSYM_pause])
 
         ## Sort increasingly regarding H //////////////////////////////////////#
         index_ordered = np.argsort(H_NSYM_mean)
-
         H_NSYM = H_NSYM_mean[index_ordered]
         Vy_NSYM = Vy_NSYM_mean[index_ordered]
         T0_NSYM = T0_NSYM_mean[index_ordered]
@@ -427,6 +429,7 @@ def FS_Kxy_discrete(files_FS, columns_FS, geofactor, sign_dTy = 1,
         index_P = H_NSYM > 0
         index_N = H_NSYM < 0
 
+        ## Seperate H > 0 and H < 0
         H_P  = H_NSYM[index_P]
         H_N  = H_NSYM[index_N]
         T0_P = T0_NSYM[index_P]
@@ -438,11 +441,13 @@ def FS_Kxy_discrete(files_FS, columns_FS, geofactor, sign_dTy = 1,
         Tm_P = Tm_NSYM[index_P]
         Tm_N = Tm_NSYM[index_N]
 
+        # Interpolate H < 0 measurements on H > 0
         Vy_N_interp = interpolate.interp1d(H_N, Vy_N)( - H_P )
         Tp_N_interp = interpolate.interp1d(H_N, Tp_N)( - H_P )
         Tm_N_interp = interpolate.interp1d(H_N, Tm_N)( - H_P )
         T0_N_interp = interpolate.interp1d(H_N, T0_N)( - H_P )
 
+        # Symmetrize measurements
         Vy_SYM = ( Vy_P - Vy_N_interp) / 2.
         Tp_SYM = ( Tp_P + Tp_N_interp) / 2.
         Tm_SYM = ( Tm_P + Tm_N_interp) / 2.
@@ -452,30 +457,62 @@ def FS_Kxy_discrete(files_FS, columns_FS, geofactor, sign_dTy = 1,
         dTx_SYM =  Tp_SYM - Tm_SYM
 
         ## Static value of Tav ////////////////////////////////////////////////#
-        Tav = np.round(Tav_SYM[-1],2)
+        Tav = np.round( np.mean(Tav_SYM), 2)
         Tav_list.append(Tav)
 
         print("T0 = " + r"{0:.2f}".format(T0) + "K -- > Tav = " + \
               r"{0:.2f}".format(Tav) + " K @ date = " + str(date))
 
-        ## Compute dTy & Kxy //////////////////////////////////////////////////#
+        ## Compute dTy & Kxy from thermocouples ///////////////////////////////#
         if T_connected == "T+":
             dTy_SYM = Vy_SYM / Sther(Tp_SYM)
         elif T_connected == "T-":
             dTy_SYM = Vy_SYM / Sther(Tm_SYM)
-        else :
+        elif T_connected == "Tav":
             dTy_SYM = Vy_SYM / Sther(Tav_SYM)
 
         Kxx_SYM = Q / dTx_SYM / alpha
         Kxy_SYM = Kxx_SYM * dTy_SYM / dTx_SYM * ( L / w )
+
+        ## Compute dTy & Kxy from thermometers ////////////////////////////////#
+        if thermometry_xx == "thermometers":
+            dTy_p_SYM = Tp_P - Tp_N # dTy computed from T+ antisym signal
+            dTy_m_SYM = Tm_P - Tm_N # dTy computed from T- antisym signal
+            Kxy_p_SYM = Kxx_SYM * dTy_p_SYM / dTx_SYM * ( L / w )
+            Kxy_m_SYM = Kxx_SYM * dTy_m_SYM / dTx_SYM * ( L / w )
+
+
+        ##>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>#
+        ## Diagnostic: keep only paused H points at each steps ////////////////#
+        ##>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>#
+
+        # Invert order of the isotherms that start from H > 0 (meaning the ones
+        # that go from H to -H), in order to plot all isotherms from -H to H.
+        if H_NSYM_raw[0] > 0:
+            # Invert the order of the plateaus previously from H to -H, now from -H to H
+            Vy_NSYM_pause = Vy_NSYM_pause[::-1]
+            H_NSYM_pause = H_NSYM_pause[::-1]
+
+        # Flatten the list of list in one list and then a numpy array
+        Vy_NSYM_diagnostic = np.array(list(itertools.chain.from_iterable(Vy_NSYM_pause)))
+
+        # Create a H array fit for diagnostic, meaning each plateau is centered
+        # on H_mean value and extend from H_mean - step_H / 2 to H_mean + step_H / 2
+        step_H = H_NSYM[1] - H_NSYM[0]
+        H_NSYM_diagnostic = [np.linspace(np.mean(ith_list)-step_H/2, np.mean(ith_list)+step_H/2, len(ith_list)) for ith_list in H_NSYM_pause]
+        H_NSYM_diagnostic = np.array(list(itertools.chain.from_iterable(H_NSYM_diagnostic)))
+
+        ##>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>#
+        ##>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>#
 
         ## Place in dictionary for each Tav ///////////////////////////////////#
         H_NSYM_dict[Tav, date] = H_NSYM
         T0_NSYM_dict[Tav, date] = T0_NSYM
         Tp_NSYM_dict[Tav, date] = Tp_NSYM
         Tm_NSYM_dict[Tav, date] = Tm_NSYM
-        Vy_NSYM_stab_dict[Tav, date] = Vy_NSYM_stab
         Vy_NSYM_dict[Tav, date] = Vy_NSYM
+        Vy_NSYM_diagnostic_dict[Tav, date] = Vy_NSYM_diagnostic
+        H_NSYM_diagnostic_dict[Tav, date] = H_NSYM_diagnostic
 
         H_SYM_dict[Tav, date] = H_P
         T0_SYM_dict[Tav, date] = T0_SYM
@@ -489,8 +526,14 @@ def FS_Kxy_discrete(files_FS, columns_FS, geofactor, sign_dTy = 1,
         Kxy_SYM_dict[Tav, date] = Kxy_SYM
         I_SYM_dict[Tav, date] = I * np.ones(len(H_P))
 
+        dTy_p_SYM_dict[Tav, date] = dTy_p_SYM
+        dTy_m_SYM_dict[Tav, date] = dTy_m_SYM
+        Kxy_p_SYM_dict[Tav, date] = Kxy_p_SYM
+        Kxy_m_SYM_dict[Tav, date] = Kxy_m_SYM
+
     ## Place in output dictionnaries all measurements /////////////////////////#
-    NSYM_dict["Vy_stab"] = Vy_NSYM_stab_dict
+    NSYM_dict["H_diagnostic"] = H_NSYM_diagnostic_dict
+    NSYM_dict["Vy_diagnostic"] = Vy_NSYM_diagnostic_dict
     NSYM_dict["H"] = H_NSYM_dict
     NSYM_dict["Vy"] = Vy_NSYM_dict
     NSYM_dict["T0"] = T0_NSYM_dict
@@ -508,6 +551,11 @@ def FS_Kxy_discrete(files_FS, columns_FS, geofactor, sign_dTy = 1,
     SYM_dict["dTy"] = dTy_SYM_dict
     SYM_dict["Kxy"] = Kxy_SYM_dict
     SYM_dict["I"] = I_SYM_dict
+
+    SYM_dict["dTy_p"] = dTy_p_SYM_dict
+    SYM_dict["dTy_m"] = dTy_m_SYM_dict
+    SYM_dict["Kxy_p"] = Kxy_p_SYM_dict
+    SYM_dict["Kxy_m"] = Kxy_m_SYM_dict
 
     return NSYM_dict, SYM_dict
 
@@ -684,3 +732,46 @@ def TS_Nernst(Data_P, Data_N, Temperatures, geofactor, Field, col_N_0, col_N_Q,
 
 
     return Nernst
+
+
+##>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>#
+
+
+def TS_CUT_discrete(SYM_dict, H_cut):
+
+    """
+    Function returns a cut of isotherms for a precise H_cut \n
+    Variables in: \n
+    - dictionnary that take for key the title of there content (e.g. "dTy") and have for values \n
+    a dictionnary which takes (Tav, date) as a key (e.g. SYM_dict["dTy"] = dTy_SYM_dict \n
+    which is a dictionnary of keys Tav, date) \n
+    SYM : means symmetrized or antisymmetrized in field data
+    - H_cut : the H value where to get the cut of the isotherm
+    """
+
+    TS_CUT_dict = {}
+
+    # Initialize the dictionnaries values to list
+    for label in SYM_dict.keys():
+        TS_CUT_dict[label] = []
+    TS_CUT_dict["date_list"] = []
+
+    # Exactract the isotherm value at H_cut
+    keys = sorted(SYM_dict["H"])
+    for Tav, date in keys:
+
+        H = SYM_dict["H"][Tav, date]
+        index_cut = H == H_cut
+
+        for label in SYM_dict.keys():
+            TS_CUT_dict[label].append(float(SYM_dict[label][Tav, date][index_cut]))
+
+        TS_CUT_dict["date_list"].append(date)
+
+    # Convert list to numpy array
+    for label in SYM_dict.keys():
+        TS_CUT_dict[label] = np.array(TS_CUT_dict[label])
+    TS_CUT_dict["date_list"] = np.array(TS_CUT_dict["date_list"])
+
+
+    return TS_CUT_dict
