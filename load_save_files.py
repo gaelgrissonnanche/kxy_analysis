@@ -17,7 +17,7 @@ def load_TS_file(folder, position, date, samplelabel = "", H = 0, measurement = 
     data files, and will return a tuple (data_P, data_N)
     """
 
-    if H != 0 and measurement[0:3] == "SYM":
+    if H != 0 and measurement[0:6] == "TS_SYM":
 
         data_P = np.loadtxt("../data_raw/{0}/Data-TS-{1}T-{2}-{3}-{4}.dat".format(
                     folder, "{0:.1f}".format(abs(H)) , position,

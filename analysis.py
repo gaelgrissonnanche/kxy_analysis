@@ -329,8 +329,8 @@ def FS_Kxy_discrete(files_FS, columns_FS, geofactor, sign_dTy = 1,
     Tp_NSYM_dict = {}
     Tm_NSYM_dict = {}
     Vy_NSYM_dict = {}
-    Vy_NSYM_diagnostic_dict = {}
-    H_NSYM_diagnostic_dict = {}
+    Vy_diagnostic_dict = {}
+    H_diagnostic_dict = {}
 
     H_SYM_dict = {}
     T0_SYM_dict = {}
@@ -494,13 +494,15 @@ def FS_Kxy_discrete(files_FS, columns_FS, geofactor, sign_dTy = 1,
             H_NSYM_pause = H_NSYM_pause[::-1]
 
         # Flatten the list of list in one list and then a numpy array
-        Vy_NSYM_diagnostic = np.array(list(itertools.chain.from_iterable(Vy_NSYM_pause)))
+        Vy_diagnostic_list = Vy_NSYM_pause
+        Vy_diagnostic = np.array(list(itertools.chain.from_iterable(Vy_diagnostic_list)))
+
 
         # Create a H array fit for diagnostic, meaning each plateau is centered
         # on H_mean value and extend from H_mean - step_H / 2 to H_mean + step_H / 2
         step_H = H_NSYM[1] - H_NSYM[0]
-        H_NSYM_diagnostic = [np.linspace(np.mean(ith_list)-step_H/2, np.mean(ith_list)+step_H/2, len(ith_list)) for ith_list in H_NSYM_pause]
-        H_NSYM_diagnostic = np.array(list(itertools.chain.from_iterable(H_NSYM_diagnostic)))
+        H_diagnostic_list = [np.linspace(np.mean(ith_list)-step_H/2, np.mean(ith_list)+step_H/2, len(ith_list)) for ith_list in H_NSYM_pause]
+        H_diagnostic = np.array(list(itertools.chain.from_iterable(H_diagnostic_list)))
 
         ##>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>#
         ##>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>#
@@ -511,8 +513,8 @@ def FS_Kxy_discrete(files_FS, columns_FS, geofactor, sign_dTy = 1,
         Tp_NSYM_dict[Tav, date] = Tp_NSYM
         Tm_NSYM_dict[Tav, date] = Tm_NSYM
         Vy_NSYM_dict[Tav, date] = Vy_NSYM
-        Vy_NSYM_diagnostic_dict[Tav, date] = Vy_NSYM_diagnostic
-        H_NSYM_diagnostic_dict[Tav, date] = H_NSYM_diagnostic
+        Vy_diagnostic_dict[Tav, date] = Vy_diagnostic
+        H_diagnostic_dict[Tav, date] = H_diagnostic
 
         H_SYM_dict[Tav, date] = H_P
         T0_SYM_dict[Tav, date] = T0_SYM
@@ -532,8 +534,8 @@ def FS_Kxy_discrete(files_FS, columns_FS, geofactor, sign_dTy = 1,
         Kxy_m_SYM_dict[Tav, date] = Kxy_m_SYM
 
     ## Place in output dictionnaries all measurements /////////////////////////#
-    NSYM_dict["H_diagnostic"] = H_NSYM_diagnostic_dict
-    NSYM_dict["Vy_diagnostic"] = Vy_NSYM_diagnostic_dict
+    NSYM_dict["H_diagnostic"] = H_diagnostic_dict
+    NSYM_dict["Vy_diagnostic"] = Vy_diagnostic_dict
     NSYM_dict["H"] = H_NSYM_dict
     NSYM_dict["Vy"] = Vy_NSYM_dict
     NSYM_dict["T0"] = T0_NSYM_dict

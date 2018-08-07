@@ -254,21 +254,21 @@ def fig_diagno_thermometry(Temperatures, ThermalConductivity, H, measurement,
     fig.subplots_adjust(left = 0.09, right = 0.96, bottom = 0.1, top = 0.88, wspace = 0.3, hspace = 0.2) # adjust the box of axes regarding the figure size
 
 
-    if (H >= 0) and measurement[0:4] == "NSYM": # only plot H >= 0 if NSYM needed
+    if (H >= 0) and measurement[0:7] == "TS_NSYM": # only plot H >= 0 if NSYM needed
         axes[0,0].plot(Temperatures["T0_P"], Temperatures["dTx_P"], ls = "--", lw = 3, marker = "o", c = "r", ms = 8, mfc = "r", mew = 0, mec = "r")
         axes[1,0].plot(Temperatures["T0_P"], Temperatures["Tav_P"] - Temperatures["T0_P"], ls = "--", lw = 3, marker = "o", c = "r", ms = 8, mfc = "r", mew = 0, mec = "r")
         axes[0,1].plot(Temperatures["T0_P"], Temperatures["dTx_P"]/Temperatures["Tav_P"]*100, ls = "--", lw = 3, marker = "o", c = "r", ms = 8, mfc = "r", mew = 0, mec = "r")
         axes[1,1].plot(Temperatures["T0_P"], ThermalConductivity["Kxx_P"], ls = "--", lw = 3, marker = "o", c = "r", ms = 8, mfc = "r", mew = 0, mec = "r")
         axes[0,0].annotate("H +" + str(abs(H)) + " T", xy = (0,0), xytext = (0.12,0.83), ha="left", textcoords = "figure fraction", color = "r", fontsize = 20, fontweight = "bold")
 
-    if (H < 0) and measurement[0:4] == "NSYM": # only plot H < 0 if NSYM needed
+    if (H < 0) and measurement[0:7] == "TS_NSYM": # only plot H < 0 if NSYM needed
         axes[0,0].plot(Temperatures["T0_N"], Temperatures["dTx_N"], ls = "--", lw = 3, marker = "o", c = "#440154", ms = 8, mfc = "#440154", mew = 0, mec = "#440154")
         axes[1,0].plot(Temperatures["T0_N"], Temperatures["Tav_N"] - Temperatures["T0_N"], ls = "--", lw = 3, marker = "o", c = "#440154", ms = 8, mfc = "#440154", mew = 0, mec = "#440154")
         axes[0,1].plot(Temperatures["T0_N"], Temperatures["dTx_N"]/Temperatures["Tav_N"]*100, ls = "--", lw = 3, marker = "o", c = "#440154", ms = 8, mfc = "#440154", mew = 0, mec = "#440154")
         axes[1,1].plot(Temperatures["T0_N"], ThermalConductivity["Kxx_N"], ls = "--", lw = 3, marker = "o", c = "#440154", ms = 8, mfc = "#440154", mew = 0, mec = "#440154")
         axes[0,0].annotate("H -" + str(abs(H)) + " T", xy = (0,0), xytext = (0.12,0.83), ha="left", textcoords = "figure fraction", color = "#440154", fontsize = 20, fontweight = "bold")
 
-    if measurement[0:3] == "SYM": # plots H>0, H<0 and SYM when needed
+    if measurement[0:6] == "TS_SYM": # plots H>0, H<0 and SYM when needed
         axes[0,0].plot(Temperatures["T0_P"], Temperatures["dTx_P"], ls = "", lw = 1, marker = "o", c = "r", ms = 8, mfc = "r", mew = 0, mec = "r")
         axes[0,0].plot(Temperatures["T0_N"], Temperatures["dTx_N"], ls = "", lw = 1, marker = "o", c = "#440154", ms = 8, mfc = "#440154", mew = 0, mec = "#440154")
         axes[0,0].plot(Temperatures["T0"], Temperatures["dTx"], ls = "--", lw = 3, marker = "o", c = "#A7A7A7", ms = 8, mfc  = "#A7A7A7", mew = 0, mec = "#A7A7A7")
