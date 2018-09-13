@@ -1,7 +1,7 @@
 # -*- coding: Latin-1 -*-
 
 ## Modules <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<#
-from numpy import cos, sin
+from numpy import cos, sin, pi
 ##>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>#
 
 def theta_TS_figure(theta):
@@ -12,8 +12,8 @@ def theta_TS_figure(theta):
 
             ## Field components ///////////////////////////////////////////////#
 
-            H_para = H * sin(theta) # H // to (ab) plane
-            H_perp = H * cos(theta) # H perp to (ab) plane
+            H_para = H * sin(theta * pi / 180) # H // to (ab) plane
+            H_perp = H * cos(theta * pi / 180) # H perp to (ab) plane
 
             fig = function_in(H = H, **parameters)
 
@@ -21,10 +21,10 @@ def theta_TS_figure(theta):
             fig.text(0.895,0.73, "{0:g}".format(theta), ha="left", fontsize = 20)
 
             fig.text(0.82,0.66, r"$H_{||}$ = ", ha = 'left', fontsize = 20)
-            fig.text(0.895,0.66, "{0:g}".format(H_para) + " T", ha="left", fontsize = 20)
+            fig.text(0.895,0.66, "{0:.2f}".format(H_para) + " T", ha="left", fontsize = 20)
 
             fig.text(0.82,0.59, r"$H_{\perp}$= ", ha = 'left', fontsize = 20)
-            fig.text(0.895,0.59, "{0:g}".format(H_perp) + " T", ha="left", fontsize = 20)
+            fig.text(0.895,0.59, "{0:.2f}".format(H_perp) + " T", ha="left", fontsize = 20)
 
             return fig
         return function_modified
@@ -61,8 +61,8 @@ def theta_save_TS_file(theta):
 
             ## Field components ///////////////////////////////////////////////#
 
-            H_para = H * sin(theta) # H // to (ab) plane
-            H_perp = H * cos(theta) # H perp to (ab) plane
+            H_para = H * sin(theta * pi / 180) # H // to (ab) plane
+            H_perp = H * cos(theta * pi / 180) # H perp to (ab) plane
 
             samplelabel = r"{0:g}".format(theta) + "deg_" + samplelabel
             Header = ("theta = " + r"{0:g}".format(theta) + "\t" +
