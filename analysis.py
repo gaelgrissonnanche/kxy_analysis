@@ -476,8 +476,8 @@ def FS_Kxy_discrete(files_FS, columns_FS, geofactor, sign_dTy = 1,
 
         ## Compute dTy & Kxy from thermometers ////////////////////////////////#
         if thermometry_xx == "thermometers":
-            dTy_p_SYM = Tp_P - Tp_N # dTy computed from T+ antisym signal
-            dTy_m_SYM = Tm_P - Tm_N # dTy computed from T- antisym signal
+            dTy_p_SYM = Tp_P - Tp_N_interp # dTy computed from T+ antisym signal
+            dTy_m_SYM = Tm_P - Tm_N_interp # dTy computed from T- antisym signal
             Kxy_p_SYM = Kxx_SYM * dTy_p_SYM / dTx_SYM * ( L / w )
             Kxy_m_SYM = Kxx_SYM * dTy_m_SYM / dTx_SYM * ( L / w )
 
