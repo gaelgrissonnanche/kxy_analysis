@@ -179,17 +179,22 @@ def temp_thermocouple(Data_P, Data_N, col_T0, col_dTabs_0, col_dTabs_Q,
 
     ## Compute dTabs
 
-    dTabs_P = abs(V_dTabs_P_Q - V_dTabs_P_0) / Sther(T0_P, Type)
-    dTabs_N = abs(V_dTabs_N_Q - V_dTabs_N_0) / Sther(T0_N, Type)
+    dTabs_P = np.abs(V_dTabs_P_Q - V_dTabs_P_0) / Sther(T0_P, Type)
+    dTabs_N = np.abs(V_dTabs_N_Q - V_dTabs_N_0) / Sther(T0_N, Type)
 
-    j = 0
+    error_P = np.ones_like(T0)
+    error_N = np.ones_like(T0)
+    while np.max(error_P) > 1e-8 and np.max(error_N) > 1e-8:
 
-    while j<=4:
+        dTabs_P_old = dTabs_P
+        dTabs_N_old = dTabs_N
 
-        dTabs_P = abs(V_dTabs_P_Q - V_dTabs_P_0) / Sther(T0_P + dTabs_P/2, Type)
-        dTabs_N = abs(V_dTabs_N_Q - V_dTabs_N_0) / Sther(T0_N + dTabs_N/2, Type)
+        dTabs_P = np.abs(V_dTabs_P_Q - V_dTabs_P_0) / Sther(T0_P + dTabs_P/2, Type)
+        dTabs_N = np.abs(V_dTabs_N_Q - V_dTabs_N_0) / Sther(T0_N + dTabs_N/2, Type)
 
-        j += 1
+        error_P = np.abs(dTabs_P_old - dTabs_P)
+        error_N = np.abs(dTabs_N_old - dTabs_N)
+
 
 
     ## Compute dTx
@@ -197,14 +202,18 @@ def temp_thermocouple(Data_P, Data_N, col_T0, col_dTabs_0, col_dTabs_Q,
     dTx_P = abs(V_dTx_P_Q - V_dTx_P_0) / Sther(T0_P + dTabs_P, Type)
     dTx_N = abs(V_dTx_N_Q - V_dTx_N_0) / Sther(T0_N + dTabs_N, Type)
 
-    i = 0
+    error_P = np.ones_like(T0)
+    error_N = np.ones_like(T0)
+    while np.max(error_P) > 1e-8 and np.max(error_N) > 1e-8:
 
-    while i<=4:
+        dTx_P_old = dTx_P
+        dTx_N_old = dTx_N
 
-        dTx_P = abs(V_dTx_P_Q - V_dTx_P_0) / Sther(T0_P + dTabs_P + dTx_P/2, Type)
-        dTx_N = abs(V_dTx_N_Q - V_dTx_N_0) / Sther(T0_N + dTabs_N + dTx_N/2, Type)
+        dTx_P = np.abs(V_dTx_P_Q - V_dTx_P_0) / Sther(T0_P + dTabs_P + dTx_P/2, Type)
+        dTx_N = np.abs(V_dTx_N_Q - V_dTx_N_0) / Sther(T0_N + dTabs_N + dTx_N/2, Type)
 
-        i += 1
+        error_P = np.abs(dTx_P_old - dTx_P)
+        error_N = np.abs(dTx_N_old - dTx_N)
 
 
     ## Compute dTx, Tp, Tm, Tav, dTy

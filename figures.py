@@ -176,8 +176,11 @@ def fig_print_FS(x_dict, y_dict, xmin = 0, xmax = None, ymin = None, ymax = None
     keys = sorted(x_dict.keys()) # (Tav, date)
 
     #///// Colormap //////#
-    cmap = mpl.cm.get_cmap(colormap, len(keys))
-    colors = cmap(arange(len(keys)))
+    if len(keys)!=1:
+        cmap = mpl.cm.get_cmap(colormap, len(keys))
+        colors = cmap(arange(len(keys)))
+    else:
+        colors = [(1, 0, 0, 1)]
 
     if colormap == "viridis":
         colors[-1] = (1, 0, 0, 1)
@@ -454,15 +457,15 @@ def fig_diagno_Seebeck(Temperatures, Seebeck, H, measurement,
     fig, axes = plt.subplots(2, 1, figsize = (6, 8)) # figsize is w x h in inch of figure
     fig.subplots_adjust(left = 0.19, right = 0.95, bottom = 0.1, top = 0.9,wspace = 0.3,hspace = 0.2)
 
-    if (H >= 0) and measurement[0:4] == "NSYM": # only plot H >= 0 if NSYM needed
+    if (H >= 0) and measurement[0:7] == "TS_NSYM": # only plot H >= 0 if NSYM needed
         axes[0].plot(Temperatures["T0_P"], Seebeck["V_S_P"] * 1e6, ls = "--", lw = 3, marker = "o", c = "r", ms = 8, mfc = "r", mew = 0, mec = "r")
         axes[1].plot(Temperatures["T0_P"], Seebeck["S_P"] / Temperatures["Tav_P"], ls = "--", lw = 3, marker = "o", c = "r", ms = 8, mfc = "r", mew = 0, mec = "r")
 
-    if (H < 0) and measurement[0:4] == "NSYM": # only plot H < 0 if NSYM needed
+    if (H < 0) and measurement[0:7] == "TS_NSYM": # only plot H < 0 if NSYM needed
         axes[0].plot(Temperatures["T0_N"], Seebeck["V_S_N"] * 1e6, ls = "--", lw = 3, marker = "o", c = "#440154", ms = 8, mfc = "#440154", mew = 0, mec = "#440154")
         axes[1].plot(Temperatures["T0_N"], Seebeck["S_N"] / Temperatures["Tav_N"], ls = "--", lw = 3, marker = "o", c = "#440154", ms = 8, mfc = "#440154", mew = 0, mec = "#440154")
 
-    if measurement[0:3] == "SYM": # plots H>0, H<0 and SYM when needed
+    if measurement[0:6] == "TS_SYM": # plots H>0, H<0 and SYM when needed
         axes[0].plot(Temperatures["T0_P"], Seebeck["V_S_P"] * 1e6, ls = "", lw = 3, marker = "o", c = "r", ms = 8, mfc = "r", mew = 0, mec = "r")
         axes[0].plot(Temperatures["T0_N"], Seebeck["V_S_N"] * 1e6, ls = "", lw = 3, marker = "o", c = "#440154", ms = 8, mfc = "#440154", mew = 0, mec = "#440154")
         axes[0].plot(Temperatures["T0"], Seebeck["V_S"] * 1e6, ls = "--", lw = 3, marker = "o", c = "#A7A7A7", ms = 8, mfc  = "#A7A7A7", mew = 0, mec = "#A7A7A7")
@@ -539,15 +542,15 @@ def fig_diagno_Nernst(Temperatures, Nernst, H, measurement,
     fig, axes = plt.subplots(2, 1, figsize = (6, 8)) # figsize is w x h in inch of figure
     fig.subplots_adjust(left = 0.19, right = 0.95, bottom = 0.1, top = 0.9,wspace = 0.3,hspace = 0.3)
 
-    if (H >= 0) and measurement[0:4] == "NSYM": # only plot H >= 0 if NSYM needed
+    if (H > 0) and measurement[0:7] == "TS_NSYM": # only plot H >= 0 if NSYM needed
         axes[0].plot(Temperatures["T0_P"], Nernst["V_N_P"] * 1e6, ls = "--", lw = 3, marker = "o", c = "r", ms = 8, mfc = "r", mew = 0, mec = "r")
         axes[1].plot(Temperatures["T0_P"], Nernst["nu_P"] * 1e3 / Temperatures["Tav_P"], ls = "--", lw = 3, marker = "o", c = "r", ms = 8, mfc = "r", mew = 0, mec = "r")
 
-    if (H < 0) and measurement[0:4] == "NSYM": # only plot H < 0 if NSYM needed
+    if (H < 0) and measurement[0:7] == "TS_NSYM": # only plot H < 0 if NSYM needed
         axes[0].plot(Temperatures["T0_N"], Nernst["V_N_N"] * 1e6, ls = "--", lw = 3, marker = "o", c = "#440154", ms = 8, mfc = "#440154", mew = 0, mec = "#440154")
         axes[1].plot(Temperatures["T0_N"], Nernst["nu_N"] * 1e3 / Temperatures["Tav_N"], ls = "--", lw = 3, marker = "o", c = "#440154", ms = 8, mfc = "#440154", mew = 0, mec = "#440154")
 
-    if measurement[0:3] == "SYM": # plots H>0, H<0 and SYM when needed
+    if measurement[0:6] == "TS_SYM": # plots H>0, H<0 and SYM when needed
         axes[0].plot(Temperatures["T0"], Nernst["V_N"] * 1e6, ls = "--", lw = 3, marker = "o", c = "#A7A7A7", ms = 8, mfc  = "#A7A7A7", mew = 0, mec = "#A7A7A7")
         axes[1].plot(Temperatures["T0"], Nernst["nu"] * 1e3 / Temperatures["Tav"], ls = "--", lw = 3, marker = "o", c = "#A7A7A7", ms = 8, mfc  = "#A7A7A7", mew = 0, mec = "#A7A7A7")
 

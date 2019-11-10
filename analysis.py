@@ -163,6 +163,8 @@ def TS_Kxy(Data_P, Data_N, ThermalConductivity, Temperatures, geofactor,
     ## Choose T_connected from Temperatures ######
     ##############################################
 
+    T0 = Temperatures["T0"]
+
     Tav_P = Temperatures["Tav_P"]
     Tav_N = Temperatures["Tav_N"]
     Tav = Temperatures["Tav"]
@@ -179,29 +181,51 @@ def TS_Kxy(Data_P, Data_N, ThermalConductivity, Temperatures, geofactor,
     Tm_N = Tav_N - dTx_N / 2
     Tm = Tav - dTx / 2
 
-
     ## Compute dTy
 
     if T_connected == "T+":
 
-        dTy_P = V_dTy_P / Sther(Tp_P, Type)
-        dTy_N = V_dTy_N / Sther(Tp_N, Type)
+        dTy_P = V_dTy_P / Sther((Tp_P+T0)/2, Type)
+        dTy_N = V_dTy_N / Sther((Tp_N+T0)/2, Type)
 
-        dTy = V_dTy / Sther(Tp, Type)
+        dTy = V_dTy / Sther((Tp+T0)/2, Type)
 
     elif T_connected == "T-":
 
-        dTy_P = V_dTy_P / Sther(Tm_P, Type)
-        dTy_N = V_dTy_N / Sther(Tm_N, Type)
+        dTy_P = V_dTy_P / Sther((Tm_P+T0)/2, Type)
+        dTy_N = V_dTy_N / Sther((Tm_N+T0)/2, Type)
 
-        dTy = V_dTy / Sther(Tm, Type)
+        dTy = V_dTy / Sther((Tm+T0)/2, Type)
 
-    else :
+    else:
 
-        dTy_P = V_dTy_P / Sther(Tav_P, Type)
-        dTy_N = V_dTy_N / Sther(Tav_N, Type)
+        dTy_P = V_dTy_P / Sther((Tav_P+T0)/2, Type)
+        dTy_N = V_dTy_N / Sther((Tav_N+T0)/2, Type)
 
-        dTy = V_dTy / Sther(Tav, Type)
+        dTy = V_dTy / Sther((Tav+T0)/2, Type)
+
+    # ## Compute dTy
+
+    # if T_connected == "T+":
+
+    #     dTy_P = V_dTy_P / Sther(Tp_P, Type)
+    #     dTy_N = V_dTy_N / Sther(Tp_N, Type)
+
+    #     dTy = V_dTy / Sther(Tp, Type)
+
+    # elif T_connected == "T-":
+
+    #     dTy_P = V_dTy_P / Sther(Tm_P, Type)
+    #     dTy_N = V_dTy_N / Sther(Tm_N, Type)
+
+    #     dTy = V_dTy / Sther(Tm, Type)
+
+    # else :
+
+    #     dTy_P = V_dTy_P / Sther(Tav_P, Type)
+    #     dTy_N = V_dTy_N / Sther(Tav_N, Type)
+
+    #     dTy = V_dTy / Sther(Tav, Type)
 
 
     ## Compute Kxy
@@ -235,7 +259,8 @@ def TS_Kxy(Data_P, Data_N, ThermalConductivity, Temperatures, geofactor,
 
 def FS_Kxy_discrete(files_FS, columns_FS, geofactor, sign_dTy = 1,
                     T_connected = "Tav", columns_calib = None,
-                    R_heater = 5000, Gain=1000, **trash):
+                    R_heater = 5000, Gain=1000,
+                    thermometry_xx="thermometers", Seebeck=None, sign_S = 1, **trash):
 
     """
     Function computes Kxy function of mangetic field for a dTy the transverse\n
@@ -295,20 +320,19 @@ def FS_Kxy_discrete(files_FS, columns_FS, geofactor, sign_dTy = 1,
     SYM_dict["I"] = I_SYM_dict \n
     """
 
-    ## Longitudinal thermometry: thermometers or thermocouple? >>>>>>>>>>>>>>>>#
-    if columns_calib == None:
-        thermometry_xx = "thermocouples"
-    else:
-        thermometry_xx = "thermometers"
-
     ## Columns FS /////////////////////////////////////////////////////////////#
     col_H = columns_FS["col_H"]
     col_T0 = columns_FS["col_T0"]
     col_I = columns_FS["col_I"]
-    col_Rp = columns_FS["col_Rp"]
-    col_Rm = columns_FS["col_Rm"]
     col_Vy = columns_FS["col_Vy"]
     col_pause = columns_FS["col_pause"]
+
+    if thermometry_xx == "thermometers":
+        col_Rp = columns_FS["col_Rp"]
+        col_Rm = columns_FS["col_Rm"]
+    elif thermometry_xx == "thermocouples":
+        col_Vabs = columns_FS["col_Vabs"]
+        col_Vx   = columns_FS["col_Vx"]
 
     ## Geometric factor ///////////////////////////////////////////////////////#
     L = geofactor["L"]
@@ -343,6 +367,9 @@ def FS_Kxy_discrete(files_FS, columns_FS, geofactor, sign_dTy = 1,
     dTy_SYM_dict ={}
     Kxy_SYM_dict = {}
     I_SYM_dict = {}
+
+    if Seebeck != None:
+        SoT_SYM_dict = {}
 
     dTy_p_SYM_dict = {}
     dTy_m_SYM_dict = {}
@@ -389,6 +416,69 @@ def FS_Kxy_discrete(files_FS, columns_FS, geofactor, sign_dTy = 1,
             Tp_NSYM_raw = np.exp( np.polyval( coeff_Rp, np.log(Data[:,col_Rp]) - np.mean(np.log(Rp_0))) )
             Tm_NSYM_raw = np.exp( np.polyval( coeff_Rm, np.log(Data[:,col_Rm]) - np.mean(np.log(Rm_0))) )
 
+        elif thermometry_xx == "thermocouples":
+
+            ## Thermocouples backgrounds //////////////////////////////////////#
+            file_calib = list_elements[3]
+            data_calib = np.loadtxt("../data_raw/" + file_calib, dtype = "float", comments = "#")
+            col_T0_calib = columns_calib["col_T0_calib"]
+            col_Vabs_0_calib = columns_calib["col_Vabs_0_calib"]
+            col_Vx_0_calib = columns_calib["col_Vx_0_calib"]
+            # T0
+            T0_calib = data_calib[:,col_T0_calib]
+            # Vabs background
+            Vabs_0_calib = data_calib[:,col_Vabs_0_calib] / Gain
+            # Vx background
+            Vx_0_calib = data_calib[:,col_Vx_0_calib] / Gain
+
+            index_T0 = np.around(T0_calib,1) == np.around(T0, 1)
+
+            # Backgrounds
+            Vabs_0 = Vabs_0_calib[index_T0]
+            Vx_0   = Vx_0_calib[index_T0]
+
+            # Vx, Vabs function of H
+            Vabs_Q_raw = Data[:, col_Vabs] / Gain
+            Vx_Q_raw   = Data[:, col_Vx] / Gain
+
+            ## Compute dTabs
+            dTabs_raw = abs(Vabs_Q_raw - Vabs_0) / Sther(T0)
+            j = 0
+            while j<=4:
+                dTabs_raw = abs(Vabs_Q_raw - Vabs_0) / Sther(T0 + dTabs_raw/2)
+                j += 1
+            ## Compute dTx
+            dTx_raw = abs(Vx_Q_raw - Vx_0) / Sther(T0 + dTabs_raw)
+            i = 0
+            while i<=4:
+                dTx_raw = abs(Vx_Q_raw - Vx_0) / Sther(T0 + dTabs_raw + dTx_raw/2)
+                i += 1
+
+            ## Compute Tp, Tm
+            Tav_NSYM_raw = T0 + dTabs_raw + dTx_raw / 2
+            Tp_NSYM_raw = Tav_NSYM_raw + dTx_raw / 2
+            Tm_NSYM_raw = Tav_NSYM_raw - dTx_raw / 2
+
+        ## Seebeck ////////////////////////////////////////////////////////////#
+        if Seebeck != None:
+                      ## Thermocouples backgrounds //////////////////////////////////////#
+            file_calib = list_elements[3]
+            data_calib = np.loadtxt("../data_raw/" + file_calib, dtype = "float", comments = "#")
+            col_T0_calib = columns_calib["col_T0_calib"]
+            col_VS_0_calib = columns_calib["col_VS_0_calib"]
+            # T0
+            T0_calib = data_calib[:,col_T0_calib]
+            # VS background
+            VS_0_calib = data_calib[:,col_VS_0_calib] / Gain
+
+            index_T0 = np.around(T0_calib,1) == np.around(T0, 1)
+
+            # Background
+            VS_0 = VS_0_calib[index_T0]
+
+            # VS function of H
+            VS_Q_raw = Data[:, columns_FS['col_VS']] / Gain
+            Seebeck_NSYM_raw = sign_S * (VS_Q_raw - VS_0) / (Tp_NSYM_raw - Tm_NSYM_raw) * 1e6 # in microV / K
 
         ## Seperate setps in field ////////////////////////////////////////////#
         H_NSYM_pause = [[float(H_NSYM_raw[i]) for i,value in it] for key,it in itertools.groupby(enumerate(pause), key=operator.itemgetter(1)) if key != 0]
@@ -397,11 +487,17 @@ def FS_Kxy_discrete(files_FS, columns_FS, geofactor, sign_dTy = 1,
         Tp_NSYM_pause = [[float(Tp_NSYM_raw[i]) for i,value in it] for key,it in itertools.groupby(enumerate(pause), key=operator.itemgetter(1)) if key != 0]
         Tm_NSYM_pause = [[float(Tm_NSYM_raw[i]) for i,value in it] for key,it in itertools.groupby(enumerate(pause), key=operator.itemgetter(1)) if key != 0]
 
+        if Seebeck != None:
+            Seebeck_NSYM_pause = [[float(Seebeck_NSYM_raw[i]) for i,value in it] for key,it in itertools.groupby(enumerate(pause), key=operator.itemgetter(1)) if key != 0]
+
         H_NSYM_mean = np.array([np.mean(ith_list[start_pause:end_pause]) for ith_list in H_NSYM_pause])
         T0_NSYM_mean = np.array([np.mean(ith_list[start_pause:end_pause]) for ith_list in T0_NSYM_pause])
         Vy_NSYM_mean = np.array([np.mean(ith_list[start_pause:end_pause]) for ith_list in Vy_NSYM_pause])
         Tp_NSYM_mean = np.array([np.mean(ith_list[start_pause:end_pause]) for ith_list in Tp_NSYM_pause])
         Tm_NSYM_mean = np.array([np.mean(ith_list[start_pause:end_pause]) for ith_list in Tm_NSYM_pause])
+
+        if Seebeck != None:
+            Seebeck_NSYM_mean = np.array([np.mean(ith_list[start_pause:end_pause]) for ith_list in Seebeck_NSYM_pause])
 
         ## Sort increasingly regarding H //////////////////////////////////////#
         index_ordered = np.argsort(H_NSYM_mean)
@@ -411,12 +507,18 @@ def FS_Kxy_discrete(files_FS, columns_FS, geofactor, sign_dTy = 1,
         Tp_NSYM = Tp_NSYM_mean[index_ordered]
         Tm_NSYM = Tm_NSYM_mean[index_ordered]
 
+        if Seebeck != None:
+            Seebeck_NSYM = Seebeck_NSYM_mean[index_ordered]
+
         ## Makes sure there is no repetition in field values //////////////////#
         H_NSYM, index_unique = np.unique(H_NSYM, return_index = True)
         Vy_NSYM = Vy_NSYM[index_unique]
         T0_NSYM = T0_NSYM[index_unique]
         Tp_NSYM = Tp_NSYM[index_unique]
         Tm_NSYM = Tm_NSYM[index_unique]
+
+        if Seebeck != None:
+            Seebeck_NSYM = Seebeck_NSYM[index_unique]
 
         ## Power //////////////////////////////////////////////////////////////#
         Q = R_heater * I**2
@@ -441,11 +543,19 @@ def FS_Kxy_discrete(files_FS, columns_FS, geofactor, sign_dTy = 1,
         Tm_P = Tm_NSYM[index_P]
         Tm_N = Tm_NSYM[index_N]
 
+        if Seebeck != None:
+            Seebeck_P = Seebeck_NSYM[index_P]
+            Seebeck_N = Seebeck_NSYM[index_N]
+
         # Interpolate H < 0 measurements on H > 0
         Vy_N_interp = interpolate.interp1d(H_N, Vy_N)( - H_P )
         Tp_N_interp = interpolate.interp1d(H_N, Tp_N)( - H_P )
         Tm_N_interp = interpolate.interp1d(H_N, Tm_N)( - H_P )
         T0_N_interp = interpolate.interp1d(H_N, T0_N)( - H_P )
+
+        if Seebeck != None:
+            Seebeck_N_interp = interpolate.interp1d(H_N, Seebeck_N)( - H_P )
+            Seebeck_SYM = ( Seebeck_P + Seebeck_N_interp) / 2.
 
         # Symmetrize measurements
         Vy_SYM = ( Vy_P - Vy_N_interp) / 2.
@@ -480,6 +590,9 @@ def FS_Kxy_discrete(files_FS, columns_FS, geofactor, sign_dTy = 1,
             dTy_m_SYM = Tm_P - Tm_N_interp # dTy computed from T- antisym signal
             Kxy_p_SYM = Kxx_SYM * dTy_p_SYM / dTx_SYM * ( L / w )
             Kxy_m_SYM = Kxx_SYM * dTy_m_SYM / dTx_SYM * ( L / w )
+
+
+
 
 
         ##>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>#
@@ -528,10 +641,14 @@ def FS_Kxy_discrete(files_FS, columns_FS, geofactor, sign_dTy = 1,
         Kxy_SYM_dict[Tav, date] = Kxy_SYM
         I_SYM_dict[Tav, date] = I * np.ones(len(H_P))
 
-        dTy_p_SYM_dict[Tav, date] = dTy_p_SYM
-        dTy_m_SYM_dict[Tav, date] = dTy_m_SYM
-        Kxy_p_SYM_dict[Tav, date] = Kxy_p_SYM
-        Kxy_m_SYM_dict[Tav, date] = Kxy_m_SYM
+        if Seebeck != None:
+            SoT_SYM_dict[Tav, date] = Seebeck_SYM / Tav_SYM
+
+        if thermometry_xx == 'thermometers':
+            dTy_p_SYM_dict[Tav, date] = dTy_p_SYM
+            dTy_m_SYM_dict[Tav, date] = dTy_m_SYM
+            Kxy_p_SYM_dict[Tav, date] = Kxy_p_SYM
+            Kxy_m_SYM_dict[Tav, date] = Kxy_m_SYM
 
     ## Place in output dictionnaries all measurements /////////////////////////#
     NSYM_dict["H_diagnostic"] = H_diagnostic_dict
@@ -554,10 +671,14 @@ def FS_Kxy_discrete(files_FS, columns_FS, geofactor, sign_dTy = 1,
     SYM_dict["Kxy"] = Kxy_SYM_dict
     SYM_dict["I"] = I_SYM_dict
 
-    SYM_dict["dTy_p"] = dTy_p_SYM_dict
-    SYM_dict["dTy_m"] = dTy_m_SYM_dict
-    SYM_dict["Kxy_p"] = Kxy_p_SYM_dict
-    SYM_dict["Kxy_m"] = Kxy_m_SYM_dict
+    if Seebeck != None:
+        SYM_dict["SoT"] = SoT_SYM_dict
+
+    if thermometry_xx == 'thermometers':
+        SYM_dict["dTy_p"] = dTy_p_SYM_dict
+        SYM_dict["dTy_m"] = dTy_m_SYM_dict
+        SYM_dict["Kxy_p"] = Kxy_p_SYM_dict
+        SYM_dict["Kxy_m"] = Kxy_m_SYM_dict
 
     return NSYM_dict, SYM_dict
 
